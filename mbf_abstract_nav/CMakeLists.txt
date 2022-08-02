@@ -5,6 +5,7 @@ find_package(catkin REQUIRED
   COMPONENTS
   actionlib
   actionlib_msgs
+  amr_road_network_msgs
   dynamic_reconfigure
   geometry_msgs
   mbf_msgs
@@ -36,6 +37,7 @@ catkin_package(
   CATKIN_DEPENDS
       actionlib
       actionlib_msgs
+      amr_road_network_msgs
       dynamic_reconfigure
       geometry_msgs
       mbf_msgs
