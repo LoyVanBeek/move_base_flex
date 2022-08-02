@@ -25,6 +25,7 @@ add_action_files(
   DIRECTORY
   action
   FILES
+  FollowPath.action
   GetPath.action
   ExePath.action
   Recovery.action
