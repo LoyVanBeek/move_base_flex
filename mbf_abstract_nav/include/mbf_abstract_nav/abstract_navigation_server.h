@@ -255,7 +255,6 @@ typedef boost::shared_ptr<dynamic_reconfigure::Server<mbf_abstract_nav::MoveBase
     virtual void callActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle);
 
     virtual void cancelActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle);
-
     /**
      * @brief Recovery action execution method. This method will be called if the action server receives a goal
      * @param goal SimpleActionServer goal containing all necessary parameters for the action execution. See the action
@@ -321,6 +320,9 @@ typedef boost::shared_ptr<dynamic_reconfigure::Server<mbf_abstract_nav::MoveBase
 
     //! shared pointer to the ExePath action server
     ActionServerExePathPtr action_server_exe_path_ptr_;
+
+    //! shared pointer to the FollowPath action server
+    ActionServerFollowPathPtr action_server_follow_path_ptr_;
 
     //! shared pointer to the GetPath action server
     ActionServerGetPathPtr action_server_get_path_ptr_;

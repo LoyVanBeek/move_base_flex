@@ -89,6 +89,14 @@ AbstractNavigationServer::AbstractNavigationServer(const TFPtr &tf_listener_ptr)
       boost::bind(&mbf_abstract_nav::AbstractNavigationServer::cancelActionExePath, this, _1),
       false));
 
+  action_server_follow_path_ptr_ = ActionServerFollowPathPtr(
+    new ActionServerFollowPath(
+      private_nh_,
+      name_action_follow_path,
+      boost::bind(&mbf_abstract_nav::AbstractNavigationServer::callActionFollowPath, this, _1),
+      boost::bind(&mbf_abstract_nav::AbstractNavigationServer::cancelActionFollowPath, this, _1),
+      false));
+
   action_server_recovery_ptr_ = ActionServerRecoveryPtr(
     new ActionServerRecovery(
       private_nh_,
