@@ -59,6 +59,7 @@
 
 #include "mbf_abstract_nav/planner_action.h"
 #include "mbf_abstract_nav/controller_action.h"
+#include "mbf_abstract_nav/follow_action.h"
 #include "mbf_abstract_nav/recovery_action.h"
 #include "mbf_abstract_nav/move_base_action.h"
 
@@ -86,6 +87,10 @@ typedef boost::shared_ptr<ActionServerGetPath> ActionServerGetPathPtr;
 typedef actionlib::ActionServer<mbf_msgs::ExePathAction> ActionServerExePath;
 typedef boost::shared_ptr<ActionServerExePath> ActionServerExePathPtr;
 
+//! FollowPath action server
+typedef actionlib::ActionServer<mbf_msgs::FollowPathAction> ActionServerFollowPath;
+typedef boost::shared_ptr<ActionServerFollowPath> ActionServerFollowPathPtr;
+
 //! Recovery action server
 typedef actionlib::ActionServer<mbf_msgs::RecoveryAction> ActionServerRecovery;
 typedef boost::shared_ptr<ActionServerRecovery> ActionServerRecoveryPtr;
@@ -96,6 +101,8 @@ typedef boost::shared_ptr<ActionServerMoveBase> ActionServerMoveBasePtr;
 
 //! ExePath action topic name
 const std::string name_action_exe_path = "exe_path";
+//! FollowPath action topic name
+const std::string name_action_follow_path = "follow_path";
 //! GetPath action topic name
 const std::string name_action_get_path = "get_path";
 //! Recovery action topic name
@@ -239,6 +246,15 @@ typedef boost::shared_ptr<dynamic_reconfigure::Server<mbf_abstract_nav::MoveBase
     virtual void callActionExePath(ActionServerExePath::GoalHandle goal_handle);
 
     virtual void cancelActionExePath(ActionServerExePath::GoalHandle goal_handle);
+
+    /**
+     * @brief FollowPath action execution method. This method will be called if the action server receives a goal
+     * @param goal SimpleActionServer goal containing all necessary parameters for the action execution. See the action
+     *        definitions in mbf_msgs.
+     */
+    virtual void callActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle);
+
+    virtual void cancelActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle);
 
     /**
      * @brief Recovery action execution method. This method will be called if the action server receives a goal

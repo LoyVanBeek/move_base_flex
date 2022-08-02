@@ -239,6 +239,18 @@ void AbstractNavigationServer::cancelActionExePath(ActionServerExePath::GoalHand
   controller_action_.cancel(goal_handle);
 }
 
+void AbstractNavigationServer::callActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle)
+{
+  ROS_INFO_STREAM_NAMED("follow_path", "Start action \"follow_path\"");
+  const mbf_msgs::FollowPathGoal &goal = *(goal_handle.getGoal().get());
+}
+
+void AbstractNavigationServer::cancelActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle)
+{
+  ROS_INFO_STREAM_NAMED("follow_path", "Cancel action \"follow_path\"");
+  // controller_action_.cancel(goal_handle);
+}
+
 void AbstractNavigationServer::callActionRecovery(ActionServerRecovery::GoalHandle goal_handle)
 {
   const mbf_msgs::RecoveryGoal &goal = *(goal_handle.getGoal().get());
