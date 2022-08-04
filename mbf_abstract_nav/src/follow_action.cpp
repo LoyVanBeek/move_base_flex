@@ -48,6 +48,7 @@ FollowAction::FollowAction(
     const mbf_utility::RobotInformation &robot_info)
     : AbstractActionBase(action_name, robot_info)
 {
+  ROS_INFO_STREAM_NAMED("follow_action", "Run constructor");
 }
 
 void FollowAction::start(

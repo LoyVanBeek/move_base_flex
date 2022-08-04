@@ -62,7 +62,7 @@ AbstractNavigationServer::AbstractNavigationServer(const TFPtr &tf_listener_ptr)
       robot_info_(*tf_listener_ptr, global_frame_, robot_frame_, tf_timeout_,
                   private_nh_.param<std::string>("odom_topic", "odom")),
       controller_action_(name_action_exe_path, robot_info_),
-      follow_action_(name_action_exe_path, robot_info_),
+      follow_action_(name_action_follow_path, robot_info_),
       planner_action_(name_action_get_path, robot_info_),
       recovery_action_(name_action_recovery, robot_info_),
       move_base_action_(name_action_move_base, robot_info_, recovery_plugin_manager_.getLoadedNames())
@@ -359,6 +359,7 @@ void AbstractNavigationServer::startActionServers()
 {
   action_server_get_path_ptr_->start();
   action_server_exe_path_ptr_->start();
+  action_server_follow_path_ptr_->start();
   action_server_recovery_ptr_->start();
   action_server_move_base_ptr_->start();
 }
@@ -390,6 +391,7 @@ void AbstractNavigationServer::reconfigure(
   }
   planner_action_.reconfigureAll(config, level);
   controller_action_.reconfigureAll(config, level);
+  follow_action_.reconfigureAll(config, level);
   recovery_action_.reconfigureAll(config, level);
   move_base_action_.reconfigure(config, level);
 
@@ -399,6 +401,7 @@ void AbstractNavigationServer::reconfigure(
 void AbstractNavigationServer::stop(){
   planner_action_.cancelAll();
   controller_action_.cancelAll();
+  follow_action_.cancelAll();
   recovery_action_.cancelAll();
   move_base_action_.cancel();
 }
