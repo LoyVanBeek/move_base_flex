@@ -80,12 +80,12 @@ void FollowAction::start(
       // we update the goal handle and pass the new plan and tolerances from the action to the
       // execution without stopping it
       execution_ptr = slot_it->second.execution;
-      execution_ptr->setNewPlan(goal_handle.getGoal()->path.poses,
-                                goal_handle.getGoal()->tolerance_from_action,
+      execution_ptr->setNewPlan(goal_handle.getGoal()->tolerance_from_action,
                                 goal_handle.getGoal()->dist_tolerance,
                                 goal_handle.getGoal()->angle_tolerance);
       // Update also goal pose, so the feedback remains consistent
-      goal_pose_ = goal_handle.getGoal()->path.poses.back();
+      // TODO: do this somewhere else?
+      //goal_pose_ = goal_handle.getGoal()->path.poses.back();
       mbf_msgs::FollowPathResult result;
       fillFollowPathResult(mbf_msgs::FollowPathResult::CANCELED, "Goal preempted by a new plan", result);
       concurrency_slots_[slot].goal_handle.setCanceled(result, result.message);
@@ -132,26 +132,26 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
   goal_mtx_.lock();
   const mbf_msgs::FollowPathGoal &goal = *(goal_handle.getGoal().get());
 
-  const std::vector<geometry_msgs::PoseStamped> &plan = goal.path.poses;
-  if (plan.empty())
-  {
-    fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an empty plan!", result);
-    goal_handle.setAborted(result, result.message);
-    ROS_ERROR_STREAM_NAMED(name_, result.message << " Canceling the action call.");
-    controller_active = false;
-    goal_mtx_.unlock();
-    return;
-  }
+  // const std::vector<geometry_msgs::PoseStamped> &plan = goal.path.poses;
+  // if (plan.empty())
+  // {
+  //   fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an empty plan!", result);
+  //   goal_handle.setAborted(result, result.message);
+  //   ROS_ERROR_STREAM_NAMED(name_, result.message << " Canceling the action call.");
+  //   controller_active = false;
+  //   goal_mtx_.unlock();
+  //   return;
+  // }
 
-  goal_pose_ = plan.back();
-  ROS_DEBUG_STREAM_NAMED(name_, "Called action \""
-      << name_ << "\" with plan:" << std::endl
-      << "frame: \"" << goal.path.header.frame_id << "\" " << std::endl
-      << "stamp: " << goal.path.header.stamp << std::endl
-      << "poses: " << goal.path.poses.size() << std::endl
-      << "goal: (" << goal_pose_.pose.position.x << ", "
-      << goal_pose_.pose.position.y << ", "
-      << goal_pose_.pose.position.z << ")");
+  // goal_pose_ = plan.back();
+  // ROS_DEBUG_STREAM_NAMED(name_, "Called action \""
+  //     << name_ << "\" with plan:" << std::endl
+  //     << "frame: \"" << goal.path.header.frame_id << "\" " << std::endl
+  //     << "stamp: " << goal.path.header.stamp << std::endl
+  //     << "poses: " << goal.path.poses.size() << std::endl
+  //     << "goal: (" << goal_pose_.pose.position.x << ", "
+  //     << goal_pose_.pose.position.y << ", "
+  //     << goal_pose_.pose.position.z << ")");
 
   goal_mtx_.unlock();
 
@@ -185,141 +185,141 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
     goal_mtx_.lock();
     state_moving_input = execution.getState();
 
-    switch (state_moving_input)
-    {
-      case AbstractFollowExecution::INITIALIZED:
-        execution.setNewPlan(plan, goal.tolerance_from_action, goal.dist_tolerance, goal.angle_tolerance);
-        execution.start();
-        break;
+  //   switch (state_moving_input)
+  //   {
+  //     case AbstractFollowExecution::INITIALIZED:
+  //       execution.setNewPlan(plan, goal.tolerance_from_action, goal.dist_tolerance, goal.angle_tolerance);
+  //       execution.start();
+  //       break;
 
-      case AbstractFollowExecution::STOPPED:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has been stopped rigorously!");
-        controller_active = false;
-        result.outcome = mbf_msgs::FollowPathResult::STOPPED;
-        result.message = "Controller has been stopped!";
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::STOPPED:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has been stopped rigorously!");
+  //       controller_active = false;
+  //       result.outcome = mbf_msgs::FollowPathResult::STOPPED;
+  //       result.message = "Controller has been stopped!";
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::CANCELED:
-        ROS_INFO_STREAM("Action \"exe_path\" canceled");
-        fillFollowPathResult(mbf_msgs::FollowPathResult::CANCELED, "Controller canceled", result);
-        goal_handle.setCanceled(result, result.message);
-        controller_active = false;
-        break;
+  //     case AbstractFollowExecution::CANCELED:
+  //       ROS_INFO_STREAM("Action \"exe_path\" canceled");
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::CANCELED, "Controller canceled", result);
+  //       goal_handle.setCanceled(result, result.message);
+  //       controller_active = false;
+  //       break;
 
-      case AbstractFollowExecution::STARTED:
-        ROS_DEBUG_STREAM_NAMED(name_, "The moving has been started!");
-        break;
+  //     case AbstractFollowExecution::STARTED:
+  //       ROS_DEBUG_STREAM_NAMED(name_, "The moving has been started!");
+  //       break;
 
-      case AbstractFollowExecution::PLANNING:
-        if (execution.isPatienceExceeded())
-        {
-          ROS_INFO_STREAM("Try to cancel the plugin \"" << name_ << "\" after the patience time has been exceeded!");
-          if (execution.cancel())
-          {
-            ROS_INFO_STREAM("Successfully canceled the plugin \"" << name_ << "\" after the patience time has been exceeded!");
-          }
-        }
-        break;
+  //     case AbstractFollowExecution::PLANNING:
+  //       if (execution.isPatienceExceeded())
+  //       {
+  //         ROS_INFO_STREAM("Try to cancel the plugin \"" << name_ << "\" after the patience time has been exceeded!");
+  //         if (execution.cancel())
+  //         {
+  //           ROS_INFO_STREAM("Successfully canceled the plugin \"" << name_ << "\" after the patience time has been exceeded!");
+  //         }
+  //       }
+  //       break;
 
-      case AbstractFollowExecution::MAX_RETRIES:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has been aborted after it exceeded the maximum number of retries!");
-        controller_active = false;
-        fillFollowPathResult(execution.getOutcome(), execution.getMessage(), result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::MAX_RETRIES:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has been aborted after it exceeded the maximum number of retries!");
+  //       controller_active = false;
+  //       fillFollowPathResult(execution.getOutcome(), execution.getMessage(), result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::PAT_EXCEEDED:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has been aborted after it exceeded the patience time");
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::PAT_EXCEEDED, execution.getMessage(), result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::PAT_EXCEEDED:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has been aborted after it exceeded the patience time");
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::PAT_EXCEEDED, execution.getMessage(), result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::NO_PLAN:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has been started without a plan!");
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started without a path", result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::NO_PLAN:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has been started without a plan!");
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started without a path", result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::EMPTY_PLAN:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has received an empty plan");
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an empty plan", result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::EMPTY_PLAN:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has received an empty plan");
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an empty plan", result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::INVALID_PLAN:
-        ROS_WARN_STREAM_NAMED(name_, "The controller has received an invalid plan");
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an invalid plan", result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::INVALID_PLAN:
+  //       ROS_WARN_STREAM_NAMED(name_, "The controller has received an invalid plan");
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INVALID_PATH, "Controller started with an invalid plan", result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::NO_LOCAL_CMD:
-        ROS_WARN_STREAM_THROTTLE_NAMED(3, name_, "No velocity command received from controller! "
-            << execution.getMessage());
-        controller_active = execution.isMoving();
-        if (!controller_active)
-        {
-          fillFollowPathResult(execution.getOutcome(), execution.getMessage(), result);
-          goal_handle.setAborted(result, result.message);
-        }
-        else
-        {
-          publishFollowPathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(),
-                                 execution.getVelocityCmd());
-        }
-        break;
+  //     case AbstractFollowExecution::NO_LOCAL_CMD:
+  //       ROS_WARN_STREAM_THROTTLE_NAMED(3, name_, "No velocity command received from controller! "
+  //           << execution.getMessage());
+  //       controller_active = execution.isMoving();
+  //       if (!controller_active)
+  //       {
+  //         fillFollowPathResult(execution.getOutcome(), execution.getMessage(), result);
+  //         goal_handle.setAborted(result, result.message);
+  //       }
+  //       else
+  //       {
+  //         publishFollowPathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(),
+  //                                execution.getVelocityCmd());
+  //       }
+  //       break;
 
-      case AbstractFollowExecution::GOT_LOCAL_CMD:
-        if (!oscillation_timeout.isZero())
-        {
-          // check if oscillating
-          if (mbf_utility::distance(robot_pose_, oscillation_pose) >= oscillation_distance)
-          {
-            last_oscillation_reset = ros::Time::now();
-            oscillation_pose = robot_pose_;
-          }
-          else if (last_oscillation_reset + oscillation_timeout < ros::Time::now())
-          {
-            ROS_WARN_STREAM_NAMED(name_, "The controller is oscillating for "
-                << (ros::Time::now() - last_oscillation_reset).toSec() << "s");
+  //     case AbstractFollowExecution::GOT_LOCAL_CMD:
+  //       if (!oscillation_timeout.isZero())
+  //       {
+  //         // check if oscillating
+  //         if (mbf_utility::distance(robot_pose_, oscillation_pose) >= oscillation_distance)
+  //         {
+  //           last_oscillation_reset = ros::Time::now();
+  //           oscillation_pose = robot_pose_;
+  //         }
+  //         else if (last_oscillation_reset + oscillation_timeout < ros::Time::now())
+  //         {
+  //           ROS_WARN_STREAM_NAMED(name_, "The controller is oscillating for "
+  //               << (ros::Time::now() - last_oscillation_reset).toSec() << "s");
 
-            execution.cancel();
-            controller_active = false;
-            fillFollowPathResult(mbf_msgs::FollowPathResult::OSCILLATION, "Oscillation detected!", result);
-            goal_handle.setAborted(result, result.message);
-            break;
-          }
-        }
-        publishFollowPathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(), execution.getVelocityCmd());
-        break;
+  //           execution.cancel();
+  //           controller_active = false;
+  //           fillFollowPathResult(mbf_msgs::FollowPathResult::OSCILLATION, "Oscillation detected!", result);
+  //           goal_handle.setAborted(result, result.message);
+  //           break;
+  //         }
+  //       }
+  //       publishFollowPathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(), execution.getVelocityCmd());
+  //       break;
 
-      case AbstractFollowExecution::ARRIVED_GOAL:
-        ROS_DEBUG_STREAM_NAMED(name_, "Controller succeeded; arrived at goal");
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::SUCCESS, "Controller succeeded; arrived at goal!", result);
-        goal_handle.setSucceeded(result, result.message);
-        break;
+  //     case AbstractFollowExecution::ARRIVED_GOAL:
+  //       ROS_DEBUG_STREAM_NAMED(name_, "Controller succeeded; arrived at goal");
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::SUCCESS, "Controller succeeded; arrived at goal!", result);
+  //       goal_handle.setSucceeded(result, result.message);
+  //       break;
 
-      case AbstractFollowExecution::INTERNAL_ERROR:
-        ROS_FATAL_STREAM_NAMED(name_, "Internal error: Unknown error thrown by the plugin: " << execution.getMessage());
-        controller_active = false;
-        fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, "Internal error: Unknown error thrown by the plugin!", result);
-        goal_handle.setAborted(result, result.message);
-        break;
+  //     case AbstractFollowExecution::INTERNAL_ERROR:
+  //       ROS_FATAL_STREAM_NAMED(name_, "Internal error: Unknown error thrown by the plugin: " << execution.getMessage());
+  //       controller_active = false;
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, "Internal error: Unknown error thrown by the plugin!", result);
+  //       goal_handle.setAborted(result, result.message);
+  //       break;
 
-      default:
-        std::stringstream ss;
-        ss << "Internal error: Unknown state in a move base flex controller execution with the number: "
-           << static_cast<int>(state_moving_input);
-        fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, ss.str(), result);
-        ROS_FATAL_STREAM_NAMED(name_, result.message);
-        goal_handle.setAborted(result, result.message);
-        controller_active = false;
-    }
+  //     default:
+  //       std::stringstream ss;
+  //       ss << "Internal error: Unknown state in a move base flex controller execution with the number: "
+  //          << static_cast<int>(state_moving_input);
+  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, ss.str(), result);
+  //       ROS_FATAL_STREAM_NAMED(name_, result.message);
+  //       goal_handle.setAborted(result, result.message);
+  //       controller_active = false;
+  //   }
     goal_mtx_.unlock();
 
     if (controller_active)

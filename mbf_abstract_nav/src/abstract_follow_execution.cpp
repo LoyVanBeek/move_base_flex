@@ -107,11 +107,20 @@ void AbstractFollowExecution::reconfigure(const MoveBaseFlexConfig &config)
 
 bool AbstractFollowExecution::start()
 {
+
   setState(STARTED);
   if (moving_)
   {
     return false; // thread is already running.
   }
+  else
+  {
+    //Unsubscribe is only done when !moving_
+    ros::NodeHandle nh;
+    ROS_INFO("Starting PLC command subscriber");
+    plc_command_sub_ = nh.subscribe("/plc_path_planner_commands", 1, &AbstractFollowExecution::handlePlcCommand, this);
+  }
+  
   moving_ = true;
   return AbstractExecutionBase::start();
 }
@@ -130,7 +139,6 @@ typename AbstractFollowExecution::ControllerState AbstractFollowExecution::getSt
 }
 
 void AbstractFollowExecution::setNewPlan(
-  const std::vector<geometry_msgs::PoseStamped> &plan,
   bool tolerance_from_action,
   double action_dist_tolerance,
   double action_angle_tolerance)
@@ -143,7 +151,6 @@ void AbstractFollowExecution::setNewPlan(
   boost::lock_guard<boost::mutex> guard(plan_mtx_);
   new_plan_ = true;
 
-  plan_ = plan;
   tolerance_from_action_ = tolerance_from_action;
   action_dist_tolerance_ = action_dist_tolerance;
   action_angle_tolerance_ = action_angle_tolerance;
@@ -260,6 +267,10 @@ bool AbstractFollowExecution::cancel()
   return true;
 }
 
+void AbstractFollowExecution::handlePlcCommand(const amr_road_network_msgs::PlcPathPlannerCommands &cmd)
+{
+  ROS_INFO("Received a command from PLC");
+}
 
 void AbstractFollowExecution::run()
 {
@@ -421,6 +432,11 @@ void AbstractFollowExecution::run()
                             loop_rate_.cycleTime().toSec(), loop_rate_.expectedCycleTime().toSec());
         }
         boost::this_thread::interruption_point();
+      }
+      else
+      {
+        ROS_INFO("Shutting down PLC command subscriber");
+        plc_command_sub_.shutdown();
       }
     }
   }

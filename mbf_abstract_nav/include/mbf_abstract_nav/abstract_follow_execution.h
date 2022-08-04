@@ -54,6 +54,8 @@
 #include "mbf_abstract_nav/MoveBaseFlexConfig.h"
 #include "mbf_abstract_nav/abstract_execution_base.h"
 
+#include <amr_road_network_msgs/PlcPathPlannerCommands.h>
+
 namespace mbf_abstract_nav
 {
 
@@ -115,7 +117,6 @@ namespace mbf_abstract_nav
      * @param action_angle_tolerance angle to goal tolerance specific for this new plan (action)
      */
     void setNewPlan(
-      const std::vector<geometry_msgs::PoseStamped> &plan,
       bool tolerance_from_action = false,
       double action_dist_tolerance = 1.0,
       double action_angle_tolerance = 3.1415);
@@ -246,6 +247,8 @@ namespace mbf_abstract_nav
     //! the global frame the robot is controlling in.
     std::string global_frame_;
 
+    ros::Subscriber plc_command_sub_;
+
     /**
      * @brief The main run method, a thread will execute this method. It contains the main controller execution loop.
      */
@@ -279,6 +282,12 @@ namespace mbf_abstract_nav
      * @param state The current controller state.
      */
     void setState(ControllerState state);
+    
+    /**
+     * @brief Callbakc for receiving PlcPathPlannerCommands
+     * @param cmd The PlcPathPlannerCommands-message just received
+     */
+    void handlePlcCommand(const amr_road_network_msgs::PlcPathPlannerCommands &cmd);
 
     //! mutex to handle safe thread communication for the current value of the state
     mutable boost::mutex state_mtx_;
