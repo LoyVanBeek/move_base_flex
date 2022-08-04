@@ -38,7 +38,7 @@
  *
  */
 
-#include <mbf_msgs/ExePathResult.h>
+#include <mbf_msgs/FollowPathResult.h>
 
 #include "mbf_abstract_nav/abstract_follow_execution.h"
 
@@ -331,7 +331,7 @@ void AbstractFollowExecution::run()
       if (!robot_info_.getRobotPose(robot_pose_))
       {
         message_ = "Could not get the robot pose";
-        outcome_ = mbf_msgs::ExePathResult::TF_ERROR;
+        outcome_ = mbf_msgs::FollowPathResult::TF_ERROR;
         publishZeroVelocity();
         setState(INTERNAL_ERROR);
         moving_ = false;
@@ -375,7 +375,7 @@ void AbstractFollowExecution::run()
           last_valid_cmd_time_ = ros::Time::now();
           retries = 0;
         }
-        else if (outcome_ == mbf_msgs::ExePathResult::CANCELED)
+        else if (outcome_ == mbf_msgs::FollowPathResult::CANCELED)
         {
           ROS_INFO_STREAM("Controller-handled cancel completed");
           cancel_ = true;
