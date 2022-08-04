@@ -252,6 +252,52 @@ void AbstractNavigationServer::callActionFollowPath(ActionServerFollowPath::Goal
 {
   ROS_INFO_STREAM_NAMED("follow_path", "Start action \"follow_path\"");
   const mbf_msgs::FollowPathGoal &goal = *(goal_handle.getGoal().get());
+
+  std::string controller_name;
+  if(!controller_plugin_manager_.getLoadedNames().empty())
+  {
+    controller_name = goal.controller.empty() ? controller_plugin_manager_.getLoadedNames().front() : goal.controller;
+  }
+  else
+  {
+    mbf_msgs::FollowPathResult result;
+    result.outcome = mbf_msgs::FollowPathResult::INVALID_PLUGIN;
+    result.message = "No plugins loaded at all!";
+    ROS_WARN_STREAM_NAMED("follow_path", result.message);
+    goal_handle.setRejected(result, result.message);
+    return;
+  }
+
+  if(!controller_plugin_manager_.hasPlugin(controller_name))
+  {
+    mbf_msgs::FollowPathResult result;
+    result.outcome = mbf_msgs::FollowPathResult::INVALID_PLUGIN;
+    result.message = "No plugin loaded with the given name \"" + goal.controller + "\"!";
+    ROS_WARN_STREAM_NAMED("follow_path", result.message);
+    goal_handle.setRejected(result, result.message);
+    return;
+  }
+
+  mbf_abstract_core::AbstractController::Ptr controller_plugin = controller_plugin_manager_.getPlugin(controller_name);
+  ROS_DEBUG_STREAM_NAMED("follow_path", "Start action \"follow_path\" using controller \"" << controller_name
+                        << "\" of type \"" << controller_plugin_manager_.getType(controller_name) << "\"");
+
+  if(controller_plugin)
+  {
+    mbf_abstract_nav::AbstractFollowExecution::Ptr follow_execution
+        = newFollowExecution(controller_name, controller_plugin);
+
+    // starts another controller action
+    follow_action_.start(goal_handle, follow_execution);
+  }
+  else
+  {
+    mbf_msgs::FollowPathResult result;
+    result.outcome = mbf_msgs::FollowPathResult::INTERNAL_ERROR;
+    result.message = "Internal Error: \"controller_plugin\" pointer should not be a null pointer!";
+    ROS_FATAL_STREAM_NAMED("exe_path", result.message);
+    goal_handle.setRejected(result, result.message);
+  }
 }
 
 void AbstractNavigationServer::cancelActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle)
@@ -344,6 +390,14 @@ mbf_abstract_nav::AbstractControllerExecution::Ptr AbstractNavigationServer::new
     const mbf_abstract_core::AbstractController::Ptr &plugin_ptr)
 {
   return boost::make_shared<mbf_abstract_nav::AbstractControllerExecution>(plugin_name, plugin_ptr, robot_info_,
+                                                                           vel_pub_, goal_pub_, last_config_);
+}
+
+mbf_abstract_nav::AbstractFollowExecution::Ptr AbstractNavigationServer::newFollowExecution(
+    const std::string &plugin_name,
+    const mbf_abstract_core::AbstractController::Ptr &plugin_ptr)
+{
+  return boost::make_shared<mbf_abstract_nav::AbstractFollowExecution>(plugin_name, plugin_ptr, robot_info_,
                                                                            vel_pub_, goal_pub_, last_config_);
 }
 

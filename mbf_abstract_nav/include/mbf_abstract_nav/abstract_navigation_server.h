@@ -159,6 +159,15 @@ typedef boost::shared_ptr<dynamic_reconfigure::Server<mbf_abstract_nav::MoveBase
     virtual mbf_abstract_nav::AbstractControllerExecution::Ptr newControllerExecution(
         const std::string &plugin_name,
         const mbf_abstract_core::AbstractController::Ptr &plugin_ptr);
+    /**
+     * @brief Create a new abstract follow execution.
+     * @param plugin_name Name of the controller to use. Following still uses a controller/local planner
+     * @param plugin_ptr Shared pointer to the plugin to use
+     * @return Shared pointer to a new @ref follow_execution "FollowExecution".
+     */
+    virtual mbf_abstract_nav::AbstractFollowExecution::Ptr newFollowExecution(
+        const std::string &plugin_name,
+        const mbf_abstract_core::AbstractController::Ptr &plugin_ptr);
 
     /**
      * @brief Create a new abstract recovery behavior execution.
