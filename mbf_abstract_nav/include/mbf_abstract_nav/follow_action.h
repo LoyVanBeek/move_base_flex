@@ -47,13 +47,13 @@
 #include <mbf_utility/robot_information.h>
 
 #include "mbf_abstract_nav/abstract_action_base.hpp"
-#include "mbf_abstract_nav/abstract_controller_execution.h"
+#include "mbf_abstract_nav/abstract_follow_execution.h"
 
 namespace mbf_abstract_nav
 {
 
 class FollowAction :
-    public AbstractActionBase<mbf_msgs::FollowPathAction, AbstractControllerExecution>
+    public AbstractActionBase<mbf_msgs::FollowPathAction, AbstractFollowExecution>
 {
  public:
 
@@ -70,10 +70,10 @@ class FollowAction :
    */
   void start(
       GoalHandle &goal_handle,
-      typename AbstractControllerExecution::Ptr execution_ptr
+      typename AbstractFollowExecution::Ptr execution_ptr
   );
 
-  void runImpl(GoalHandle &goal_handle, AbstractControllerExecution& execution);
+  void runImpl(GoalHandle &goal_handle, AbstractFollowExecution& execution);
 
 protected:
   void publishFollowPathFeedback(

@@ -62,6 +62,7 @@ AbstractNavigationServer::AbstractNavigationServer(const TFPtr &tf_listener_ptr)
       robot_info_(*tf_listener_ptr, global_frame_, robot_frame_, tf_timeout_,
                   private_nh_.param<std::string>("odom_topic", "odom")),
       controller_action_(name_action_exe_path, robot_info_),
+      follow_action_(name_action_exe_path, robot_info_),
       planner_action_(name_action_get_path, robot_info_),
       recovery_action_(name_action_recovery, robot_info_),
       move_base_action_(name_action_move_base, robot_info_, recovery_plugin_manager_.getLoadedNames())

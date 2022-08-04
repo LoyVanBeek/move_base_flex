@@ -367,6 +367,7 @@ typedef boost::shared_ptr<dynamic_reconfigure::Server<mbf_abstract_nav::MoveBase
     mbf_utility::RobotInformation robot_info_;
 
     ControllerAction controller_action_;
+    FollowAction follow_action_;
     PlannerAction planner_action_;
     RecoveryAction recovery_action_;
     MoveBaseAction move_base_action_;

@@ -61,6 +61,7 @@ include_directories(
 
 add_library(${MBF_ABSTRACT_SERVER_LIB}
   src/controller_action.cpp
+  src/follow_action.cpp
   src/planner_action.cpp
   src/recovery_action.cpp
   src/move_base_action.cpp
@@ -68,6 +69,7 @@ add_library(${MBF_ABSTRACT_SERVER_LIB}
   src/abstract_navigation_server.cpp
   src/abstract_planner_execution.cpp
   src/abstract_controller_execution.cpp
+  src/abstract_follow_execution.cpp
   src/abstract_recovery_execution.cpp
 )
 
