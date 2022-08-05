@@ -250,13 +250,14 @@ void AbstractNavigationServer::cancelActionExePath(ActionServerExePath::GoalHand
 
 void AbstractNavigationServer::callActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle)
 {
-  ROS_INFO_STREAM_NAMED("follow_path", "Start action \"follow_path\"");
+  ROS_INFO_STREAM_NAMED("follow_path", "Start action follow_path");
   const mbf_msgs::FollowPathGoal &goal = *(goal_handle.getGoal().get());
 
   std::string controller_name;
   if(!controller_plugin_manager_.getLoadedNames().empty())
   {
     controller_name = goal.controller.empty() ? controller_plugin_manager_.getLoadedNames().front() : goal.controller;
+    ROS_INFO_STREAM_NAMED("follow_path", "Controller name: " << controller_name);
   }
   else
   {
@@ -279,15 +280,17 @@ void AbstractNavigationServer::callActionFollowPath(ActionServerFollowPath::Goal
   }
 
   mbf_abstract_core::AbstractController::Ptr controller_plugin = controller_plugin_manager_.getPlugin(controller_name);
-  ROS_DEBUG_STREAM_NAMED("follow_path", "Start action \"follow_path\" using controller \"" << controller_name
+  ROS_INFO_STREAM_NAMED("follow_path", "Start action \"follow_path\" using controller \"" << controller_name
                         << "\" of type \"" << controller_plugin_manager_.getType(controller_name) << "\"");
 
   if(controller_plugin)
   {
+    ROS_INFO_STREAM_NAMED("follow_path", "New execution with " << controller_name);
     mbf_abstract_nav::AbstractFollowExecution::Ptr follow_execution
         = newFollowExecution(controller_name, controller_plugin);
 
     // starts another controller action
+    ROS_INFO_STREAM_NAMED("follow_path", "Starting action with new execution");
     follow_action_.start(goal_handle, follow_execution);
   }
   else
@@ -303,7 +306,7 @@ void AbstractNavigationServer::callActionFollowPath(ActionServerFollowPath::Goal
 void AbstractNavigationServer::cancelActionFollowPath(ActionServerFollowPath::GoalHandle goal_handle)
 {
   ROS_INFO_STREAM_NAMED("follow_path", "Cancel action \"follow_path\"");
-  // controller_action_.cancel(goal_handle);
+  follow_action_.cancel(goal_handle);
 }
 
 void AbstractNavigationServer::callActionRecovery(ActionServerRecovery::GoalHandle goal_handle)
