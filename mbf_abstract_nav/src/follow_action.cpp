@@ -199,12 +199,12 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
     state_moving_input = execution.getState();
     ROS_INFO_STREAM_NAMED("follow_action", "state_moving_input: " << state_moving_input);
 
-  //   switch (state_moving_input)
-  //   {
-  //     case AbstractFollowExecution::INITIALIZED:
-  //       execution.setNewPlan(plan, goal.tolerance_from_action, goal.dist_tolerance, goal.angle_tolerance);
-  //       execution.start();
-  //       break;
+    switch (state_moving_input)
+    {
+      case AbstractFollowExecution::INITIALIZED:
+        execution.setNewPlan(goal.tolerance_from_action, goal.dist_tolerance, goal.angle_tolerance);
+        execution.start();
+        break;
 
   //     case AbstractFollowExecution::STOPPED:
   //       ROS_WARN_STREAM_NAMED(name_, "The controller has been stopped rigorously!");
@@ -311,12 +311,12 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
   //       publishFollowPathFeedback(goal_handle, execution.getOutcome(), execution.getMessage(), execution.getVelocityCmd());
   //       break;
 
-  //     case AbstractFollowExecution::ARRIVED_GOAL:
-  //       ROS_DEBUG_STREAM_NAMED(name_, "Controller succeeded; arrived at goal");
-  //       controller_active = false;
-  //       fillFollowPathResult(mbf_msgs::FollowPathResult::SUCCESS, "Controller succeeded; arrived at goal!", result);
-  //       goal_handle.setSucceeded(result, result.message);
-  //       break;
+      case AbstractFollowExecution::ARRIVED_GOAL:
+        ROS_DEBUG_STREAM_NAMED(name_, "Controller succeeded; arrived at goal");
+        controller_active = false;
+        fillFollowPathResult(mbf_msgs::FollowPathResult::SUCCESS, "Controller succeeded; arrived at goal!", result);
+        goal_handle.setSucceeded(result, result.message);
+        break;
 
   //     case AbstractFollowExecution::INTERNAL_ERROR:
   //       ROS_FATAL_STREAM_NAMED(name_, "Internal error: Unknown error thrown by the plugin: " << execution.getMessage());
@@ -325,15 +325,15 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
   //       goal_handle.setAborted(result, result.message);
   //       break;
 
-  //     default:
-  //       std::stringstream ss;
-  //       ss << "Internal error: Unknown state in a move base flex controller execution with the number: "
-  //          << static_cast<int>(state_moving_input);
-  //       fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, ss.str(), result);
-  //       ROS_FATAL_STREAM_NAMED(name_, result.message);
-  //       goal_handle.setAborted(result, result.message);
-  //       controller_active = false;
-  //   }
+      default:
+        std::stringstream ss;
+        ss << "Internal error: Unknown state in a move base flex controller execution with the number: "
+           << static_cast<int>(state_moving_input);
+        fillFollowPathResult(mbf_msgs::FollowPathResult::INTERNAL_ERROR, ss.str(), result);
+        ROS_FATAL_STREAM_NAMED(name_, result.message);
+        goal_handle.setAborted(result, result.message);
+        controller_active = false;
+    }
     goal_mtx_.unlock();
 
     if (controller_active)

@@ -249,6 +249,8 @@ namespace mbf_abstract_nav
 
     ros::Subscriber plc_command_sub_;
 
+    int current_target_id_ = -1;
+
     /**
      * @brief The main run method, a thread will execute this method. It contains the main controller execution loop.
      */
@@ -369,6 +371,8 @@ namespace mbf_abstract_nav
 
     //! replaces parameter angle_tolerance_ for the action
     double action_angle_tolerance_;
+
+    bool succeeded_ = false;
   };
 
 } /* namespace mbf_abstract_nav */

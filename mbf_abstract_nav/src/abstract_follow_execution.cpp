@@ -120,6 +120,7 @@ bool AbstractFollowExecution::start()
     //Unsubscribe is only done when !moving_
     ros::NodeHandle nh;
     ROS_INFO("Not yet moving, starting PLC command subscriber");
+    succeeded_ = false;
     plc_command_sub_ = nh.subscribe("/plc_path_planner_commands", 1, &AbstractFollowExecution::handlePlcCommand, this);
   }
   
@@ -272,7 +273,71 @@ bool AbstractFollowExecution::cancel()
 
 void AbstractFollowExecution::handlePlcCommand(const amr_road_network_msgs::PlcPathPlannerCommands &cmd)
 {
-  ROS_INFO("Received a command from PLC");
+  ROS_INFO_STREAM_NAMED("follow_execution", "Received a command from PLC with target_id " << cmd.segment_path.target_id);
+  // TODO: implement logic from `follow_plc_path` here. 
+  // - Instead of calling the ExePath action, call `setPlan`
+  // - Instead of subscribing to feedback, use the distance checks in FollowAction::publishFollowPathFeedback
+  // `AbstractFollowExecution::run` should just loop until some flag is set.
+
+  // Slice path to just from current to target_id
+  auto start = cmd.segment_path.waypoints.poses.begin() + 15;  // TODO: offset of 15 should be replaced by finding index closest to robot_pose_
+  auto end = cmd.segment_path.waypoints.poses.begin() + cmd.segment_path.target_index + 1;
+  auto start_index = distance(cmd.segment_path.waypoints.poses.begin(), start);
+  auto end_index = distance(cmd.segment_path.waypoints.poses.begin(), end);
+
+  if(cmd.segment_path.target_id == 0)
+  {
+    ROS_WARN_STREAM_NAMED("follow_execution", "Target_id == 0, so cancelling current goal");
+    // setState(CANCELLED);
+    controller_->cancel();
+  }
+  else
+  {
+    if(cmd.segment_path.target_id != current_target_id_)
+    {
+      ROS_INFO_STREAM_NAMED("follow_execution", "The target changed from " << current_target_id_ << " to " << cmd.segment_path.target_id << ". We need to cancel the current path execution and start a new one");
+
+      ROS_INFO_NAMED("follow_execution", "Setting plan");
+      ROS_INFO_NAMED("follow_execution", "Same goal, almost reached: send a new goal to end further ahead");
+      ROS_INFO_STREAM_NAMED("follow_execution", "start: " << start_index << ", end: " << end_index << ", end - start: " << end_index - start_index);
+      std::vector<geometry_msgs::PoseStamped> sliced_path(end - start);
+      copy(start, end, sliced_path.begin());
+      controller_->setPlan(sliced_path);
+    }
+    else
+    {
+      // TODO: Check how robot_pose_ is updated
+      auto goal_pose = cmd.segment_path.target_pose;
+      auto dist_to_goal = static_cast<float>(mbf_utility::distance(robot_pose_, goal_pose));
+      auto angle_to_goal = static_cast<float>(mbf_utility::angle(robot_pose_, goal_pose));
+      // Cannot use reachedGoalCheck, we need to update the goal before the robot will really stop
+      // TODO: Maybe parametrize, via goal, how close to finishing we want to be before sending a new goal
+      if(dist_to_goal > 2 or angle_to_goal > 0.5)
+      {
+        ROS_INFO_NAMED("follow_execution", "Same goal, which is still not almost reached: ignore command and finish the current execution");
+      }
+      else
+      {
+        ROS_INFO_NAMED("follow_execution", "Same goal, almost reached: send a new goal to end further ahead");
+        ROS_INFO_STREAM_NAMED("follow_execution", "start: " << start_index << ", end: " << end_index << ", end - start: " << end_index - start_index);
+        std::vector<geometry_msgs::PoseStamped> sliced_path(end - start);
+        copy(start, end, sliced_path.begin());
+        if(sliced_path.size() < 15)
+        {
+          ROS_INFO_NAMED("follow_execution", "Goal reached");
+          succeeded_ = true;
+        }
+        else
+        {
+          ROS_INFO_NAMED("follow_execution", "Setting plan");
+          controller_->setPlan(sliced_path);
+        }
+        // TODO: if that is too little path, we reached the goal, otherwise setPlan again
+      }
+    }
+  }
+  current_target_id_ = cmd.segment_path.target_id;
+  // TODO: send feedback
 }
 
 void AbstractFollowExecution::run()
