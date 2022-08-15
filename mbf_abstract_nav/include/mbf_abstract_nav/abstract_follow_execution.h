@@ -61,8 +61,8 @@ namespace mbf_abstract_nav
 
 /**
  * @defgroup controller_execution Controller Execution Classes
- * @brief The controller execution classes are derived from the AbstractFollowExecution and extends the
- *        functionality. The base controller execution code is located in the AbstractFollowExecution.
+ * @brief The controller execution classes are derived from the AbstractExecutionBase and extends the
+ *        functionality. The base controller execution code is located in the AbstractExecutionBase.
  */
 
 /**

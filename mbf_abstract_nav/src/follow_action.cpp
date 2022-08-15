@@ -56,10 +56,10 @@ void FollowAction::start(
     typename AbstractFollowExecution::Ptr execution_ptr
 )
 {
-  ROS_INFO_NAMED("follow_path", "FollowAction start");
+  ROS_INFO_NAMED("follow_action", "FollowAction start");
   if(goal_handle.getGoalStatus().status == actionlib_msgs::GoalStatus::RECALLING)
   {
-    ROS_INFO_NAMED("follow_path", "Goal is being recalled");
+    ROS_INFO_NAMED("follow_action", "Goal is being recalled");
     goal_handle.setCanceled();
     return;
   }
@@ -67,12 +67,12 @@ void FollowAction::start(
   uint8_t slot = goal_handle.getGoal()->concurrency_slot;
 
   bool update_plan = false;
-  ROS_INFO_STREAM_NAMED("follow_path", "update_plan: " << update_plan);
+  ROS_INFO_STREAM_NAMED("follow_action", "update_plan: " << update_plan);
   slot_map_mtx_.lock();
   std::map<uint8_t, ConcurrencySlot>::iterator slot_it = concurrency_slots_.find(slot);
   if(slot_it != concurrency_slots_.end() && slot_it->second.in_use)
   {
-    ROS_INFO_NAMED("follow_path", "slot_it != concurrency_slots_.end() && slot_it->second.in_use");
+    ROS_INFO_NAMED("follow_action", "slot_it != concurrency_slots_.end() && slot_it->second.in_use");
     boost::lock_guard<boost::mutex> goal_guard(goal_mtx_);
     if ((slot_it->second.execution->getName() == goal_handle.getGoal()->controller ||
          goal_handle.getGoal()->controller.empty()) &&
@@ -84,7 +84,7 @@ void FollowAction::start(
       // we update the goal handle and pass the new plan and tolerances from the action to the
       // execution without stopping it
       execution_ptr = slot_it->second.execution;
-      ROS_INFO_NAMED("follow_path", "execution_ptr->setNewPlan");
+      ROS_INFO_NAMED("follow_action", "execution_ptr->setNewPlan");
       execution_ptr->setNewPlan(goal_handle.getGoal()->tolerance_from_action,
                                 goal_handle.getGoal()->dist_tolerance,
                                 goal_handle.getGoal()->angle_tolerance);
@@ -94,10 +94,10 @@ void FollowAction::start(
       mbf_msgs::FollowPathResult result;
       fillFollowPathResult(mbf_msgs::FollowPathResult::CANCELED, "Goal preempted by a new plan", result);
       concurrency_slots_[slot].goal_handle.setCanceled(result, result.message);
-      ROS_INFO_NAMED("follow_path", "Old goal is cancelled");
+      ROS_INFO_NAMED("follow_action", "Old goal is cancelled");
       concurrency_slots_[slot].goal_handle = goal_handle;
       concurrency_slots_[slot].goal_handle.setAccepted();
-      ROS_INFO_NAMED("follow_path", "New goal is accepted");
+      ROS_INFO_NAMED("follow_action", "New goal is accepted");
     }
   }
   slot_map_mtx_.unlock();
@@ -110,13 +110,15 @@ void FollowAction::start(
 
 void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &execution)
 {
-  ROS_INFO_NAMED("follow_path", "runImpl");
+  ROS_INFO_NAMED("follow_action", "runImpl");
+  ROS_INFO_STREAM_NAMED("follow_action", "Locking goal 1");
   goal_mtx_.lock();
   // Note that we always use the goal handle stored on the concurrency slots map, as it can change when replanning
   uint8_t slot = goal_handle.getGoal()->concurrency_slot;
+  ROS_INFO_STREAM_NAMED("follow_action", "Got concurrency slot from goal:" << slot);
   goal_mtx_.unlock();
 
-  ROS_DEBUG_STREAM_NAMED(name_, "Start action "  << name_);
+  ROS_INFO_STREAM_NAMED(name_, "Start action "  << name_);
 
   // ensure we don't provide values from previous execution on case of error before filling both poses
   goal_pose_ = geometry_msgs::PoseStamped();
@@ -137,7 +139,9 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
   typename AbstractFollowExecution::ControllerState state_moving_input;
   bool controller_active = true;
 
+  ROS_INFO_STREAM_NAMED("follow_action", "Locking goal 2");
   goal_mtx_.lock();
+  ROS_INFO_STREAM_NAMED("follow_action", "Getting goal");
   const mbf_msgs::FollowPathGoal &goal = *(goal_handle.getGoal().get());
 
   // const std::vector<geometry_msgs::PoseStamped> &plan = goal.path.poses;
@@ -190,8 +194,10 @@ void FollowAction::runImpl(GoalHandle &goal_handle, AbstractFollowExecution &exe
       oscillation_pose = robot_pose_;
     }
 
+    ROS_INFO_STREAM_NAMED("follow_action", "Locking goal 3");
     goal_mtx_.lock();
     state_moving_input = execution.getState();
+    ROS_INFO_STREAM_NAMED("follow_action", "state_moving_input: " << state_moving_input);
 
   //   switch (state_moving_input)
   //   {

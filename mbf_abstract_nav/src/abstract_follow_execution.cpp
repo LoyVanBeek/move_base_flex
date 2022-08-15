@@ -107,12 +107,12 @@ void AbstractFollowExecution::reconfigure(const MoveBaseFlexConfig &config)
 
 bool AbstractFollowExecution::start()
 {
-  ROS_INFO_NAMED("follow_path", "execution start");
+  ROS_INFO_NAMED("follow_execution", "execution start");
 
   setState(STARTED);
   if (moving_)
   {
-    ROS_INFO_NAMED("follow_path", "Already moving");
+    ROS_INFO_NAMED("follow_execution", "Already moving");
     return false; // thread is already running.
   }
   else
@@ -145,7 +145,7 @@ void AbstractFollowExecution::setNewPlan(
   double action_dist_tolerance,
   double action_angle_tolerance)
 {
-  ROS_INFO_NAMED("follow_path", "AbstractFollowExecution::setNewPlan");
+  ROS_INFO_NAMED("follow_execution", "setNewPlan");
   if (moving_)
   {
     // This is fine on continuous replanning
@@ -277,7 +277,7 @@ void AbstractFollowExecution::handlePlcCommand(const amr_road_network_msgs::PlcP
 
 void AbstractFollowExecution::run()
 {
-  ROS_INFO_NAMED("follow_path", "execution run");
+  ROS_INFO_NAMED("follow_execution", "execution run");
   start_time_ = ros::Time::now();
 
   // init plan
